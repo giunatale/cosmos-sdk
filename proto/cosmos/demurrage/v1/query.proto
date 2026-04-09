@@ -1,0 +1,64 @@
+syntax = "proto3";
+package cosmos.demurrage.v1;
+
+option go_package = "github.com/cosmos/cosmos-sdk/x/demurrage/types";
+
+import "gogoproto/gogo.proto";
+import "google/api/annotations.proto";
+import "cosmos/demurrage/v1/demurrage.proto";
+import "cosmos_proto/cosmos.proto";
+import "amino/amino.proto";
+
+// Query defines the gRPC querier service for the demurrage module.
+service Query {
+  // Params returns the current demurrage module parameters.
+  rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
+    option (google.api.http).get = "/cosmos/demurrage/v1/params";
+  }
+
+  // DemurrageState returns the current module-level dynamic state
+  // (current annual rate and global accumulator).
+  rpc DemurrageState(QueryDemurrageStateRequest) returns (QueryDemurrageStateResponse) {
+    option (google.api.http).get = "/cosmos/demurrage/v1/state";
+  }
+
+  // EffectiveBalance returns the post-demurrage (materialised) balance
+  // for a given account address and denom.
+  rpc EffectiveBalance(QueryEffectiveBalanceRequest) returns (QueryEffectiveBalanceResponse) {
+    option (google.api.http).get = "/cosmos/demurrage/v1/effective_balance/{address}/{denom}";
+  }
+}
+
+// QueryParamsRequest is the request type for the Query/Params RPC method.
+message QueryParamsRequest {}
+
+// QueryParamsResponse is the response type for the Query/Params RPC method.
+message QueryParamsResponse {
+  Params params = 1 [(gogoproto.nullable) = false, (amino.dont_omitempty) = true];
+}
+
+// QueryDemurrageStateRequest is the request type for the Query/DemurrageState RPC method.
+message QueryDemurrageStateRequest {}
+
+// QueryDemurrageStateResponse is the response type for the Query/DemurrageState RPC method.
+message QueryDemurrageStateResponse {
+  DemurrageState state = 1 [(gogoproto.nullable) = false, (amino.dont_omitempty) = true];
+}
+
+// QueryEffectiveBalanceRequest is the request type for the Query/EffectiveBalance RPC method.
+message QueryEffectiveBalanceRequest {
+  string address = 1;
+  string denom   = 2;
+}
+
+// QueryEffectiveBalanceResponse is the response type for the Query/EffectiveBalance RPC method.
+message QueryEffectiveBalanceResponse {
+  // effective_balance is the post-demurrage balance (what the account would have
+  // if materialised right now). This is a read-only projection; it does NOT
+  // modify chain state.
+  string effective_balance = 1 [
+    (cosmos_proto.scalar)  = "cosmos.Int",
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable)   = false
+  ];
+}

@@ -62,6 +62,10 @@ import (
 	_ "github.com/cosmos/cosmos-sdk/x/staking" // import for side-effects
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	stakingmodulev1 "github.com/cosmos/cosmos-sdk/x/staking/types/module"
+
+	_ "github.com/cosmos/cosmos-sdk/x/demurrage" // import for side-effects
+	demurragetypes "github.com/cosmos/cosmos-sdk/x/demurrage/types"
+	demurragemodulev1 "github.com/cosmos/cosmos-sdk/x/demurrage/types/module"
 )
 
 var (
@@ -73,6 +77,9 @@ var (
 		{Account: stakingtypes.BondedPoolName, Permissions: []string{authtypes.Burner, stakingtypes.ModuleName}},
 		{Account: stakingtypes.NotBondedPoolName, Permissions: []string{authtypes.Burner, stakingtypes.ModuleName}},
 		{Account: govtypes.ModuleName, Permissions: []string{authtypes.Burner}},
+		// The demurrage module account collects levied tokens before routing them to the sink.
+		// It needs Burner permission for SinkMode = "burn".
+		{Account: demurragetypes.ModuleName, Permissions: []string{authtypes.Burner}},
 	}
 
 	// blocked account addresses
@@ -102,6 +109,9 @@ var (
 					// CanWithdrawInvariant invariant.
 					// NOTE: staking module is required if HistoricalEntries param > 0
 					BeginBlockers: []string{
+						// demurrage runs before mint so that if both are active during
+						// a transition period, demurrage fires first.
+						demurragetypes.ModuleName,
 						minttypes.ModuleName,
 						distrtypes.ModuleName,
 						slashingtypes.ModuleName,
@@ -141,6 +151,8 @@ var (
 						vestingtypes.ModuleName,
 						circuittypes.ModuleName,
 						epochstypes.ModuleName,
+						// demurrage after epochs so epoch identifiers are registered.
+						demurragetypes.ModuleName,
 					},
 					// When ExportGenesis is not specified, the export genesis module order
 					// is equal to the init genesis order
@@ -235,6 +247,10 @@ var (
 			{
 				Name:   epochstypes.ModuleName,
 				Config: appconfig.WrapAny(&epochsmodulev1.Module{}),
+			},
+			{
+				Name:   demurragetypes.ModuleName,
+				Config: appconfig.WrapAny(&demurragemodulev1.Module{}),
 			},
 		},
 	}),

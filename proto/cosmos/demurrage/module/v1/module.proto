@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package cosmos.demurrage.module.v1;
+
+import "cosmos/app/v1alpha1/module.proto";
+
+option go_package = "github.com/cosmos/cosmos-sdk/x/demurrage/types/module";
+
+// Module is the config object of the demurrage module.
+message Module {
+  option (cosmos.app.v1alpha1.module) = {
+    go_import: "github.com/cosmos/cosmos-sdk/x/demurrage"
+  };
+
+  // authority defines the custom module authority. If not set, defaults to the governance module.
+  string authority = 1;
+}

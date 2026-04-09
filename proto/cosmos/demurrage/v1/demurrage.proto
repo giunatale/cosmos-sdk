@@ -1,0 +1,91 @@
+syntax = "proto3";
+package cosmos.demurrage.v1;
+
+option go_package = "github.com/cosmos/cosmos-sdk/x/demurrage/types";
+
+import "gogoproto/gogo.proto";
+import "cosmos_proto/cosmos.proto";
+import "amino/amino.proto";
+
+// Params defines the governance-controlled parameters of the x/demurrage module.
+// The naming mirrors x/mint intentionally so that governance ergonomics are familiar.
+message Params {
+  option (amino.name) = "cosmos-sdk/x/demurrage/Params";
+
+  // demurrage_rate_min is the floor of the annualised demurrage rate (e.g. 0.07 = 7%).
+  string demurrage_rate_min = 1 [
+    (cosmos_proto.scalar)  = "cosmos.Dec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
+    (gogoproto.nullable)   = false,
+    (amino.dont_omitempty) = true
+  ];
+
+  // demurrage_rate_max is the ceiling of the annualised demurrage rate (e.g. 0.20 = 20%).
+  string demurrage_rate_max = 2 [
+    (cosmos_proto.scalar)  = "cosmos.Dec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
+    (gogoproto.nullable)   = false,
+    (amino.dont_omitempty) = true
+  ];
+
+  // demurrage_rate_change is the maximum yearly change in the demurrage rate (e.g. 0.13 = 13%).
+  string demurrage_rate_change = 3 [
+    (cosmos_proto.scalar)  = "cosmos.Dec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
+    (gogoproto.nullable)   = false,
+    (amino.dont_omitempty) = true
+  ];
+
+  // goal_bonded is the target bonding ratio (e.g. 0.67 = 67%).
+  string goal_bonded = 4 [
+    (cosmos_proto.scalar)  = "cosmos.Dec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
+    (gogoproto.nullable)   = false,
+    (amino.dont_omitempty) = true
+  ];
+
+  // epoch_identifier is the x/epochs epoch identifier to hook into (e.g. "hour").
+  string epoch_identifier = 5;
+
+  // sink_mode controls where levied tokens go: "burn", "community_pool", or "redistribution".
+  string sink_mode = 6;
+
+  // exempt_module_accounts is the list of module-account names whose balances are never levied.
+  // Always includes bonded_tokens_pool and not_bonded_tokens_pool; others (gov, distribution,
+  // community_pool, ibc_transfer) should be added here.
+  repeated string exempt_module_accounts = 7;
+}
+
+// DemurrageState holds the module-level dynamic state persisted each epoch.
+message DemurrageState {
+  // current_annual_rate is the current annualised demurrage rate as a sdk.Dec string.
+  string current_annual_rate = 1 [
+    (cosmos_proto.scalar)  = "cosmos.Dec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
+    (gogoproto.nullable)   = false
+  ];
+
+  // global_accumulator is the running product (1 - per_epoch_rate) applied each epoch.
+  // Starts at 1.0 at genesis and is monotonically non-increasing.
+  string global_accumulator = 2 [
+    (cosmos_proto.scalar)  = "cosmos.Dec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
+    (gogoproto.nullable)   = false
+  ];
+}
+
+// AccountDemurrageState holds the per-account lazy-evaluation state.
+// Stored in x/demurrage's own KV store, keyed by account address.
+message AccountDemurrageState {
+  // reference_accumulator is the value of GlobalAccumulator the last time this
+  // account's balance was materialised (touched). Used to compute accrued levy.
+  string reference_accumulator = 1 [
+    (cosmos_proto.scalar)  = "cosmos.Dec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
+    (gogoproto.nullable)   = false
+  ];
+
+  // reference_block is the block height at which reference_accumulator was last recorded.
+  // Informational only — not used in levy calculations.
+  int64 reference_block = 2;
+}

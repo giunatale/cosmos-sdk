@@ -33,6 +33,7 @@ import (
 	authzkeeper "github.com/cosmos/cosmos-sdk/x/authz/keeper"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	consensuskeeper "github.com/cosmos/cosmos-sdk/x/consensus/keeper"
+	demurragekeeper "github.com/cosmos/cosmos-sdk/x/demurrage/keeper"
 	distrkeeper "github.com/cosmos/cosmos-sdk/x/distribution/keeper"
 	epochskeeper "github.com/cosmos/cosmos-sdk/x/epochs/keeper"
 	govkeeper "github.com/cosmos/cosmos-sdk/x/gov/keeper"
@@ -77,6 +78,7 @@ type SimApp struct {
 	ConsensusParamsKeeper consensuskeeper.Keeper
 	CircuitKeeper         circuitkeeper.Keeper
 	EpochsKeeper          *epochskeeper.Keeper
+	DemurrageKeeper       demurragekeeper.Keeper
 
 	// simulation manager
 	sm *module.SimulationManager
@@ -176,6 +178,7 @@ func NewSimApp(
 		&app.ConsensusParamsKeeper,
 		&app.CircuitKeeper,
 		&app.EpochsKeeper,
+		&app.DemurrageKeeper,
 	); err != nil {
 		panic(err)
 	}

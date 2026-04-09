@@ -1,0 +1,30 @@
+syntax = "proto3";
+package cosmos.demurrage.v1;
+
+option go_package = "github.com/cosmos/cosmos-sdk/x/demurrage/types";
+
+import "gogoproto/gogo.proto";
+import "amino/amino.proto";
+import "cosmos_proto/cosmos.proto";
+import "cosmos/demurrage/v1/demurrage.proto";
+
+// GenesisState defines the demurrage module's genesis state.
+message GenesisState {
+  // params defines all the parameters of the module.
+  Params params = 1 [(gogoproto.nullable) = false, (amino.dont_omitempty) = true];
+
+  // state is the initial dynamic state of the module.
+  // On fresh genesis: current_annual_rate = DemurrageRateMin, global_accumulator = 1.0.
+  DemurrageState state = 2 [(gogoproto.nullable) = false, (amino.dont_omitempty) = true];
+
+  // account_states holds the persisted per-account reference accumulators.
+  // Empty on a fresh chain; populated on chain export so that lazy-evaluation
+  // state is preserved across upgrades and genesis restarts.
+  repeated AccountDemurrageStateEntry account_states = 3 [(gogoproto.nullable) = false];
+}
+
+// AccountDemurrageStateEntry maps a bech32 account address to its demurrage state.
+message AccountDemurrageStateEntry {
+  string                address         = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  AccountDemurrageState demurrage_state = 2 [(gogoproto.nullable) = false];
+}
